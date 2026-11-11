@@ -140,6 +140,10 @@ Explore the data to understand the distribution of churn and identify patterns a
 - Box plots for numerical variables
 - Churn rate by activity level
 
+The interactive Streamlit dashboard presents a focused selection
+of these visualizations to provide a clear and concise overview
+of the most important churn patterns.
+
 ### 4. Correlation Analysis
 
 **Objective:**  
@@ -269,16 +273,22 @@ gym-membership-churn-prediction/
 ├── data/
 │   └── gym_churn_us.csv
 │
+├── models/
+│   └── churn_model.pkl
+│
 ├── outputs/
 │   ├── churn_insights.csv
 │   ├── churn_recommendations.csv
 │   └── model_comparison.csv
 │
 ├── .gitignore
+├── app.py
 ├── main.py
 ├── requirements.txt
 └── README.md
-
+```
+**Note:** The dataset CSV is not included in the GitHub repository.
+Download it separately and place it inside the `data/` folder before running the project.
 ## Technologies Used
 
 - **Python** — Programming language
@@ -287,21 +297,71 @@ gym-membership-churn-prediction/
 - **Matplotlib** — Data visualization
 - **Seaborn** — Statistical visualization
 - **Scikit-learn** — Machine learning and model evaluation
+- **Streamlit** — Interactive dashboard development
+- **Plotly** — Interactive charts and visualizations
+- **Joblib** — Saving and loading the trained machine learning model
 - **PyCharm** — Development environment
 - **Git & GitHub** — Version control and project hosting
 
 ## How to Run
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/kerenjulia2829-cmd/gym-membership-churn-prediction.git
 cd gym-membership-churn-prediction
+```
+
+### 2. Create and Activate Virtual Environment
+
+```bash
 python -m venv .venv
 .venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
+```
+
+### 4. Download the Dataset
+
+Download the Gym Customers Features and Churn dataset from Kaggle:
+
+[Gym Customers Features and Churn – Kaggle](https://www.kaggle.com/datasets/adrianvinueza/gym-customers-features-and-churn)
+
+Place the downloaded `gym_churn_us.csv` file inside the `data/` folder.
+
+The expected file location is:
+
+```text
+data/gym_churn_us.csv
+```
+
+### 5. Run the Machine Learning Workflow
+
+```bash
 python main.py
 ```
+
+This executes the data analysis, model training, evaluation, and generation of output files.
+
+### 6. Launch the Interactive Dashboard
+
+```bash
+python -m streamlit run app.py
+```
+
+Open the local URL displayed in the terminal to access the interactive dashboard.
+
+The dashboard uses the saved Logistic Regression model to estimate
+individual member churn probability. It also provides rule-based
+retention recommendations based on the member's details.
+
+The predictions are estimates and should not be treated as
+guaranteed outcomes.
+
 
 ## Outputs
 
@@ -309,9 +369,10 @@ The project generates the following output files:
 
 | File | Description |
 |---|---|
-| `churn_insights.csv` | Key findings identified from the churn analysis |
-| `churn_recommendations.csv` | Business recommendations based on the observed churn patterns |
-| `model_comparison.csv` | Performance comparison of the trained machine learning models |
+| `outputs/churn_insights.csv` | Key findings identified from the churn analysis |
+| `outputs/churn_recommendations.csv` | Business recommendations based on the observed churn patterns |
+| `outputs/model_comparison.csv` | Performance comparison of the trained machine learning models |
+| `models/churn_model.pkl` | Saved Logistic Regression model and scaler used for individual churn predictions in the Streamlit dashboard |
 
 ## Limitations
 
@@ -328,7 +389,6 @@ The project generates the following output files:
 - Experiment with additional classification models and hyperparameter tuning.
 - Investigate feature selection and dimensionality reduction for highly correlated variables.
 - Add more detailed model interpretability techniques.
-- Develop an interactive dashboard for monitoring churn risk.
 - Evaluate the model on real-world gym membership data.
 - Deploy the model as a web application for practical use.
 
