@@ -60,7 +60,7 @@ with tab1:
             values="Members",
             title="Stayed vs Churned Members",
             hole=0.4),
-        use_container_width=True)
+        width="stretch")
 
     #churn analysis by contract period
     st.subheader("Churn Rate by Contract Period")
@@ -81,7 +81,7 @@ with tab1:
         categoryorder="array",
         categoryarray=["1", "6", "12"])
     fig.update_traces(texttemplate="%{text:.2f}%", textposition="outside")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     #churn analysis by activity level
     st.subheader("Churn Rate by Activity Level")
@@ -281,11 +281,11 @@ with tab3:
 
     #display of key findings
     st.subheader("Key Churn Findings")
-    st.dataframe(insights_df, use_container_width=True, hide_index=True)
+    st.dataframe(insights_df, width="stretch", hide_index=True)
 
     #display of business recommendations
     st.subheader("Business Recommendations")
     st.dataframe(
         recommendations_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True)
