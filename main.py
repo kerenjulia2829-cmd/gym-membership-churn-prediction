@@ -1,219 +1,248 @@
 import pandas as pd
-df=pd.read_csv("data/gym_churn_us.csv")
-# print(df.head())
-# print(df.shape)
-# df.info()
-# print(df.isnull().sum())
-# print(df.duplicated().sum())
-# print(df["Churn"].value_counts())
-# print(df["Churn"].value_counts(normalize=True)*100)
-# print(df["gender"].unique())
-# binary_columns=["gender","Near_Location","Partner","Promo_friends","Phone",
-#                 "Group_visits","Churn"]
-# for column in binary_columns:
-#     print(column,":",df[column].unique())
-# print(df["Contract_period"].unique())
-# print(df["Age"].describe())
-# print(df.describe().T)
-# for column in binary_columns:
-#     print(column,":",df[column].value_counts().to_dict())
-# print(df["Contract_period"].value_counts().sort_index())
-
-# print(df.min())
-# print(df.max())
+import numpy as np
 import matplotlib.pyplot as plt
-# df["Lifetime"].plot(kind="box")
-# plt.show()
-# df["Avg_additional_charges_total"].plot(kind="box")
-# plt.show()
-# df["Avg_class_frequency_total"].plot(kind="box")
-# plt.show()
-# df["Avg_class_frequency_current_month"].plot(kind="box")
-# plt.show()
+import seaborn as sns
 
-# df["Churn"].value_counts().plot(kind="bar")
-# plt.title("Gym Membership Churn Distribution")
-# plt.xlabel("Churn")
-# plt.ylabel("Number od Members")
-# plt.show()
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    roc_auc_score,
+    roc_curve
+)
+print("Gym Membership Churn Prediction")
+print("--------------------------------")
 
-# churn_by_contract=df.groupby("Contract_period")["Churn"].mean()*100
-# churn_by_contract.plot(kind="bar")
-# plt.title("Churn Rate by Contract Period")
-# plt.xlabel("Contract Period (Months")
-# plt.ylabel("Churn Rate (%)")
-# plt.show()
+# Loading dataset
+df = pd.read_csv("data/gym_churn_us.csv")
 
-# churn_by_gender=df.groupby("gender")["Churn"].mean()*100
-# churn_by_gender.plot(kind="bar")
-# plt.title("Churn Rate by Gender")
-# plt.xlabel("Gender")
-# plt.ylabel("Churn Rate (%)")
-# plt.show()
+# Validating dataset structure
+required_columns = [
+    "gender",
+    "Near_Location",
+    "Partner",
+    "Promo_friends",
+    "Phone",
+    "Contract_period",
+    "Group_visits",
+    "Age",
+    "Avg_additional_charges_total",
+    "Month_to_end_contract",
+    "Lifetime",
+    "Avg_class_frequency_total",
+    "Avg_class_frequency_current_month",
+    "Churn"]
+missing_columns = set(required_columns) - set(df.columns)
+if missing_columns:
+    raise ValueError(f"Missing required columns: {missing_columns}")
+if not set(df["Churn"].unique()).issubset({0, 1}):
+    raise ValueError("Churn must contain only 0 and 1.")
+print("Dataset validation successful!")
+print("\nDataset loaded successfully!")
+print("Shape:", df.shape)
+print("\nFirst 5 rows:")
+print(df.head())
 
-# churn_by_location=df.groupby("Near_Location")["Churn"].mean()*100
-# churn_by_location.plot(kind="bar")
-# plt.title("Churn Rate by Location")
-# plt.xlabel("Near Location")
-# plt.ylabel("Churn Rate (%)")
-# plt.show()
+print("\nMissing values:")
+print(df.isnull().sum().sum())
 
-# churn_by_partner=df.groupby("Partner")["Churn"].mean()*100
-# churn_by_partner.plot(kind="bar")
-# plt.title("Churn Rate by Partner Status")
-# plt.xlabel("Partner")
-# plt.ylabel("Churn Rate (%)")
-# plt.show()
+print("\nDuplicate rows:")
+print(df.duplicated().sum())
 
-# churn_by_promo=df.groupby("Promo_friends")["Churn"].mean()*100
-# churn_by_promo.plot(kind="bar")
-# plt.title("Churn Rate by Friend Promotion")
-# plt.xlabel("Joined Through Friend Promotion")
-# plt.ylabel("Churn Rate (%)")
-# plt.show()
+# Target distribution
+print("\nChurn distribution:")
+print(df["Churn"].value_counts())
 
-# churn_by_phone = df.groupby("Phone")["Churn"].mean() * 100
-# churn_by_phone.plot(kind="bar")
-# plt.title("Churn Rate by Phone Availability")
-# plt.xlabel("Phone Provided")
-# plt.ylabel("Churn Rate (%)")
-# plt.show()
+print("\nChurn percentage:")
+print(df["Churn"].value_counts(normalize=True) * 100)
 
-# churn_by_group = df.groupby("Group_visits")["Churn"].mean() * 100
-# churn_by_group.plot(kind="bar")
-# plt.title("Churn Rate by Group Visits")
-# plt.xlabel("Participates in Group Visits")
-# plt.ylabel("Churn Rate (%)")
-# plt.show()
+# Churn distribution visualization
+churn_counts = df["Churn"].value_counts().sort_index()
 
-# age_by_churn = df.groupby("Churn")["Age"].mean()
-# df.boxplot(column="Age", by="Churn")
-# plt.title("Age Distribution by Churn Status")
-# plt.suptitle("")
-# plt.xlabel("Churn Status")
-# plt.ylabel("Age (Years)")
+plt.figure(figsize=(6, 4))
+plt.bar(["Stayed", "Churned"], churn_counts)
+plt.title("Gym Membership Churn Distribution")
+plt.xlabel("Membership Status")
+plt.ylabel("Number of Members")
 # plt.show()
 
-# lifetime_by_churn = df.groupby("Churn")["Lifetime"].mean()
-# print(lifetime_by_churn)
-# df.boxplot(column="Lifetime", by="Churn")
-# plt.title("Lifetime Distribution by Churn Status")
-# plt.suptitle("")
-# plt.xlabel("Churn Status")
-# plt.ylabel("Lifetime (Months)")
+# Churn rate by contract period
+churn_by_contract = df.groupby("Contract_period")["Churn"].mean() * 100
+
+print("\nChurn rate by contract period:")
+print(churn_by_contract)
+
+plt.figure(figsize=(7, 4))
+plt.bar(
+    churn_by_contract.index.astype(str),
+    churn_by_contract.values
+)
+plt.title("Churn Rate by Contract Period")
+plt.xlabel("Contract Period (Months)")
+plt.ylabel("Churn Rate (%)")
 # plt.show()
 
-# charges_by_churn = df.groupby("Churn")["Avg_additional_charges_total"].mean()
-# df.boxplot(column="Avg_additional_charges_total", by="Churn")
-# plt.title("Additional Charges Distribution by Churn Status")
-# plt.suptitle("")
-# plt.xlabel("Churn Status")
-# plt.ylabel("Average Additional Charges")
+# Churn rate by selected member characteristics
+binary_features = [
+    "gender",
+    "Near_Location",
+    "Partner",
+    "Promo_friends",
+    "Phone",
+    "Group_visits"
+]
+
+for feature in binary_features:
+    churn_rate = df.groupby(feature)["Churn"].mean() * 100
+
+    print(f"\nChurn rate by {feature}:")
+    print(churn_rate)
+
+# Visualize churn rate by selected member characteristics
+for feature in binary_features:
+    churn_rate = df.groupby(feature)["Churn"].mean() * 100
+
+    plt.figure(figsize=(6, 4))
+    plt.bar(
+        churn_rate.index.astype(str),
+        churn_rate.values
+    )
+    plt.title(f"Churn Rate by {feature}")
+    plt.xlabel(feature)
+    plt.ylabel("Churn Rate (%)")
+    # plt.show()
+
+# Age distribution by churn status
+print("\nAverage age by churn status:")
+print(df.groupby("Churn")["Age"].mean())
+
+df.boxplot(column="Age", by="Churn")
+plt.title("Age Distribution by Churn Status")
+plt.suptitle("")
+plt.xlabel("Churn (0 = Stayed, 1 = Churned)")
+plt.ylabel("Age")
 # plt.show()
 
-# months_to_end_by_churn = df.groupby("Churn")["Month_to_end_contract"].mean()
-# df.boxplot(column="Month_to_end_contract", by="Churn")
-# plt.title("Months to End of Contract by Churn Status")
-# plt.suptitle("")
-# plt.xlabel("Churn Status")
-# plt.ylabel("Months to End of Contract")
+# Lifetime distribution by churn status
+print("\nAverage lifetime by churn status:")
+print(df.groupby("Churn")["Lifetime"].mean())
+
+df.boxplot(column="Lifetime", by="Churn")
+plt.title("Lifetime Distribution by Churn Status")
+plt.suptitle("")
+plt.xlabel("Churn (0 = Stayed, 1 = Churned)")
+plt.ylabel("Lifetime")
 # plt.show()
 
-# class_frequency_total_by_churn = df.groupby("Churn")["Avg_class_frequency_total"].mean()
-# df.boxplot(column="Avg_class_frequency_total", by="Churn")
-# plt.title("Total Class Frequency by Churn Status")
-# plt.suptitle("")
-# plt.xlabel("Churn Status")
-# plt.ylabel("Average Class Frequency")
+# Additional charges by churn status
+print("\nAverage additional charges by churn status:")
+print(df.groupby("Churn")["Avg_additional_charges_total"].mean())
+
+df.boxplot(column="Avg_additional_charges_total", by="Churn")
+plt.title("Additional Charges by Churn Status")
+plt.suptitle("")
+plt.xlabel("Churn (0 = Stayed, 1 = Churned)")
+plt.ylabel("Average Additional Charges")
 # plt.show()
 
-# class_frequency_current_by_churn = df.groupby("Churn")["Avg_class_frequency_current_month"].mean()
-# df.boxplot(column="Avg_class_frequency_current_month", by="Churn")
-# plt.title("Current Month Class Frequency by Churn Status")
-# plt.suptitle("")
-# plt.xlabel("Churn Status")
-# plt.ylabel("Average Class Frequency")
+# Months to end of contract by churn status
+print("\nAverage months to end of contract by churn status:")
+print(df.groupby("Churn")["Month_to_end_contract"].mean())
+
+df.boxplot(column="Month_to_end_contract", by="Churn")
+plt.title("Months to End of Contract by Churn Status")
+plt.suptitle("")
+plt.xlabel("Churn (0 = Stayed, 1 = Churned)")
+plt.ylabel("Months to End of Contract")
 # plt.show()
 
-# contract_member_count = df["Contract_period"].value_counts().sort_index()
-# print(contract_member_count)
+# Overall class frequency by churn status
+print("\nAverage class frequency by churn status:")
+print(df.groupby("Churn")["Avg_class_frequency_total"].mean())
 
-churned_by_contract = df[df["Churn"] == 1].groupby("Contract_period").size()
-# print(churned_by_contract)
-
-# contract_analysis = pd.DataFrame({
-#     "Total Members": contract_member_count,
-#     "Churned Members": churned_by_contract
-# })
-
-# contract_analysis.plot(kind="bar")
-# plt.title("Total and Churned Members by Contract Period")
-# plt.xlabel("Contract Period (Months)")
-# plt.ylabel("Number of Members")
-# plt.xticks(rotation=0)
-# plt.legend()
+df.boxplot(column="Avg_class_frequency_total", by="Churn")
+plt.title("Overall Class Frequency by Churn Status")
+plt.suptitle("")
+plt.xlabel("Churn (0 = Stayed, 1 = Churned)")
+plt.ylabel("Average Class Frequency")
 # plt.show()
 
-# churned_share_by_contract = (churned_by_contract / df["Churn"].sum()) * 100
-# churned_share_by_contract.plot(kind="bar")
-# plt.title("Share of Churned Members by Contract Period")
-# plt.xlabel("Contract Period (Months)")
-# plt.ylabel("Share of All Churned Members (%)")
-# plt.xticks(rotation=0)
+# Current month class frequency by churn status
+print("\nAverage current-month class frequency by churn status:")
+print(df.groupby("Churn")["Avg_class_frequency_current_month"].mean())
+
+df.boxplot(column="Avg_class_frequency_current_month", by="Churn")
+plt.title("Current-Month Class Frequency by Churn Status")
+plt.suptitle("")
+plt.xlabel("Churn (0 = Stayed, 1 = Churned)")
+plt.ylabel("Current-Month Class Frequency")
 # plt.show()
 
-# print(df["Avg_class_frequency_current_month"].describe())
+# Creating activity level groups
 df["Activity_Level"] = pd.qcut(
     df["Avg_class_frequency_current_month"],
     q=4,
     labels=["Low", "Medium-Low", "Medium-High", "High"]
 )
-# print(df["Activity_Level"].value_counts().sort_index())
-churn_by_activity = df.groupby("Activity_Level", observed=True)["Churn"].mean() * 100
-# churn_by_activity.plot(kind="bar")
-# plt.title("Churn Rate by Activity Level")
-# plt.xlabel("Activity Level")
-# plt.ylabel("Churn Rate (%)")
-# plt.xticks(rotation=0)
+
+# Churn rate by activity level
+churn_by_activity = df.groupby(
+    "Activity_Level",
+    observed=True
+)["Churn"].mean() * 100
+
+print("\nChurn rate by activity level:")
+print(churn_by_activity)
+
+plt.figure(figsize=(7, 4))
+plt.bar(
+    churn_by_activity.index,
+    churn_by_activity.values
+)
+plt.title("Churn Rate by Current-Month Activity Level")
+plt.xlabel("Activity Level")
+plt.ylabel("Churn Rate (%)")
 # plt.show()
 
-# df["Activity_Change"] = (
-#     df["Avg_class_frequency_current_month"]
-#     - df["Avg_class_frequency_total"]
-# )
-# print(df["Activity_Change"].describe())
+# Creating activity change
+df["Activity_Change"] = (
+    df["Avg_class_frequency_current_month"]
+    - df["Avg_class_frequency_total"]
+)
 
-# activity_change_by_churn = df.groupby("Churn")["Activity_Change"].mean()
-# print(activity_change_by_churn)
+print("\nAverage activity change by churn status:")
+print(df.groupby("Churn")["Activity_Change"].mean())
 
-# df.boxplot(column="Activity_Change", by="Churn")
-# plt.title("Activity Change by Churn Status")
-# plt.suptitle("")
-# plt.xlabel("Churn Status")
-# plt.ylabel("Activity Change")
+df.boxplot(column="Activity_Change", by="Churn")
+plt.title("Activity Change by Churn Status")
+plt.suptitle("")
+plt.xlabel("Churn (0 = Stayed, 1 = Churned)")
+plt.ylabel("Activity Change")
 # plt.show()
 
-import seaborn as sns
-# correlation_matrix = df.corr(numeric_only=True)
-# # print(correlation_matrix)
-# plt.figure(figsize=(12, 8))
-# sns.heatmap(
-#     correlation_matrix,
-#     annot=True,
-#     fmt=".2f",
-#     cmap="coolwarm"
-# )
-# plt.title("Correlation Matrix of Gym Membership Variables")
-# # plt.show()
-#
-# strong_correlations = correlation_matrix[
-#     (correlation_matrix.abs() > 0.80) &
-#     (correlation_matrix.abs() < 1.00)
-# ]
-# print(strong_correlations.dropna(how="all").dropna(axis=1, how="all"))
+# Correlation matrix
+correlation_matrix = df.corr(numeric_only=True)
 
+print("\nCorrelation with Churn:")
+print(
+    correlation_matrix["Churn"]
+    .sort_values()
+)
 
+plt.figure(figsize=(12, 8))
+sns.heatmap(
+    correlation_matrix,
+    annot=True,
+    fmt=".2f",
+    cmap="coolwarm"
+)
+plt.title("Correlation Matrix of Gym Membership Variables")
+# plt.show()
 
+# Selecting features and target
 features = [
     "gender",
     "Near_Location",
@@ -229,12 +258,16 @@ features = [
     "Avg_class_frequency_total",
     "Avg_class_frequency_current_month"
 ]
+
 X = df[features]
 y = df["Churn"]
-# print("X shape:", X.shape)
-# print("y shape:", y.shape)
 
+print("\nFeature matrix shape:", X.shape)
+print("Target shape:", y.shape)
+
+# Splitting the data into training and testing sets
 from sklearn.model_selection import train_test_split
+
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
@@ -242,122 +275,199 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42,
     stratify=y
 )
-# print("X_train:", X_train.shape)
-# print("X_test:", X_test.shape)
-# print("y_train:", y_train.shape)
-# print("y_test:", y_test.shape)
-# print(X_train.describe().T[["min", "max"]])
 
+print("\nTraining data shape:", X_train.shape)
+print("Testing data shape:", X_test.shape)
+
+# Standardizing the features for Logistic Regression
 from sklearn.preprocessing import StandardScaler
+
 scaler = StandardScaler()
+
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
-# print("X_train_scaled shape:", X_train_scaled.shape)
-# print("X_test_scaled shape:", X_test_scaled.shape)
 
+print("\nScaled training data shape:", X_train_scaled.shape)
+print("Scaled testing data shape:", X_test_scaled.shape)
 
-
+# Training the Logistic Regression model
 from sklearn.linear_model import LogisticRegression
+
 logistic_model = LogisticRegression(random_state=42)
+
 logistic_model.fit(X_train_scaled, y_train)
-# print("Logistic Regression model trained successfully!")
 
+print("\nLogistic Regression model trained successfully!")
+
+# Generating predictions
 y_pred = logistic_model.predict(X_test_scaled)
-# print(y_pred[:20])
 
-from sklearn.metrics import confusion_matrix
-cm = confusion_matrix(y_test, y_pred)
-# print(cm)
+print("\nLogistic Regression predictions generated successfully!")
+print("Number of predictions:", len(y_pred))
 
-from sklearn.metrics import classification_report
-# print(classification_report(y_test, y_pred))
+# Evaluating the Logistic Regression
+from sklearn.metrics import classification_report, confusion_matrix
 
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# ROC-AUC calculation
 from sklearn.metrics import roc_auc_score
-y_prob = logistic_model.predict_proba(X_test_scaled)[:, 1]
-roc_auc = roc_auc_score(y_test, y_prob)
-# print("ROC-AUC:", roc_auc)
 
+y_prob = logistic_model.predict_proba(X_test_scaled)[:, 1]
+
+roc_auc = roc_auc_score(y_test, y_prob)
+
+print("\nLogistic Regression ROC-AUC:", roc_auc)
+
+# ROC curve plot
 from sklearn.metrics import roc_curve
-import matplotlib.pyplot as plt
+
 fpr, tpr, thresholds = roc_curve(y_test, y_prob)
-plt.plot(fpr, tpr)
-plt.plot([0, 1], [0, 1], linestyle="--")
+
+plt.figure(figsize=(7, 5))
+plt.plot(fpr, tpr, label=f"Logistic Regression (AUC = {roc_auc:.4f})")
+plt.plot([0, 1], [0, 1], linestyle="--", label="Random Classifier")
+
 plt.title("ROC Curve - Logistic Regression")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
+plt.legend()
 # plt.show()
 
+# Training Random Forest model
 from sklearn.ensemble import RandomForestClassifier
+
 random_forest_model = RandomForestClassifier(
     n_estimators=200,
     random_state=42
 )
+
 random_forest_model.fit(X_train, y_train)
-# print("Random Forest model trained successfully!")
 
+print("\nRandom Forest model trained successfully!")
+
+# Generating Random Forest predictions
 y_pred_rf = random_forest_model.predict(X_test)
-# print(y_pred_rf[:20])
 
-from sklearn.metrics import classification_report
-# print(classification_report(y_test, y_pred_rf))
+print("\nRandom Forest predictions generated successfully!")
+print("Number of predictions:", len(y_pred_rf))
 
+# Random Forest evaluation
+print("\nRandom Forest Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred_rf))
+
+print("\nRandom Forest Classification Report:")
+print(classification_report(y_test, y_pred_rf))
+
+# Calculating Random Forest ROC-AUC
 y_prob_rf = random_forest_model.predict_proba(X_test)[:, 1]
+
 roc_auc_rf = roc_auc_score(y_test, y_prob_rf)
-# print("Random Forest ROC-AUC:", roc_auc_rf)
+
+print("\nRandom Forest ROC-AUC:", roc_auc_rf)
+
+# machine learning models comparison
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 model_comparison = pd.DataFrame({
     "Model": ["Logistic Regression", "Random Forest"],
-    "Accuracy": [0.93, 0.92],
-    "Precision": [0.88, 0.88],
-    "Recall": [0.83, 0.83],
-    "F1-Score": [0.85, 0.85],
-    "ROC-AUC": [0.9774, 0.9684]
+    "Accuracy": [
+        accuracy_score(y_test, y_pred),
+        accuracy_score(y_test, y_pred_rf)
+    ],
+    "Precision": [
+        precision_score(y_test, y_pred),
+        precision_score(y_test, y_pred_rf)
+    ],
+    "Recall": [
+        recall_score(y_test, y_pred),
+        recall_score(y_test, y_pred_rf)
+    ],
+    "F1-Score": [
+        f1_score(y_test, y_pred),
+        f1_score(y_test, y_pred_rf)
+    ],
+    "ROC-AUC": [roc_auc, roc_auc_rf]
 })
-# print(model_comparison)
-model_comparison.to_csv("outputs/model_comparison.csv", index=False)
 
+print("\nModel Comparison:")
+print(model_comparison.round(4))
+
+# saving model comparison
+import os
+
+os.makedirs("outputs", exist_ok=True)
+
+model_comparison.to_csv(
+    "outputs/model_comparison.csv",
+    index=False
+)
+
+print("\nModel comparison saved successfully!")
+
+# Random Forest feature importance
 feature_importance = pd.DataFrame({
     "Feature": features,
     "Importance": random_forest_model.feature_importances_
 })
+
 feature_importance = feature_importance.sort_values(
     by="Importance",
     ascending=False
 )
-# print(feature_importance)
 
+print("\nRandom Forest Feature Importance:")
+print(feature_importance)
+
+# Visualization of feature importance
 feature_importance.plot(
     kind="barh",
     x="Feature",
     y="Importance",
-    legend=False
+    legend=False,
+    figsize=(8, 6)
 )
+
 plt.title("Random Forest Feature Importance")
 plt.xlabel("Importance")
 plt.ylabel("Feature")
+plt.gca().invert_yaxis()
 # plt.show()
 
+# Logistic Regression coefficients
 logistic_coefficients = pd.DataFrame({
     "Feature": features,
     "Coefficient": logistic_model.coef_[0]
 })
+
 logistic_coefficients = logistic_coefficients.sort_values(
     by="Coefficient"
 )
-# print(logistic_coefficients)
 
+print("\nLogistic Regression Coefficients:")
+print(logistic_coefficients)
+
+# Visualizing coefficients
 logistic_coefficients.plot(
     kind="barh",
     x="Feature",
     y="Coefficient",
-    legend=False
+    legend=False,
+    figsize=(8, 6)
 )
+
 plt.title("Logistic Regression Coefficients")
 plt.xlabel("Coefficient")
 plt.ylabel("Feature")
 plt.axvline(x=0)
-# plt.show()
+plt.tight_layout()
+plt.show()
 
+# Creating churn insights
 insights = pd.DataFrame({
     "Factor": [
         "Lifetime",
@@ -373,7 +483,7 @@ insights = pd.DataFrame({
         "Phone Availability"
     ],
     "Finding": [
-        "Churned members had much shorter recorded lifetimes",
+        "Churned members had shorter recorded lifetimes",
         "Churned members showed lower current-month activity",
         "Churned members were younger on average",
         "Shorter contracts had higher observed churn",
@@ -382,13 +492,16 @@ insights = pd.DataFrame({
         "Members without friend promotion had higher observed churn",
         "Non-partner members had higher observed churn",
         "Members not near the gym had higher observed churn",
-        "Churn rates were almost identical",
-        "Churn rates were almost identical"
+        "Churn rates were almost identical by gender",
+        "Churn rates were almost identical by phone availability"
     ]
 })
-# print(insights)
+
 insights.to_csv("outputs/churn_insights.csv", index=False)
 
+print("\nChurn insights saved successfully!")
+
+# creating business recommendations
 recommendations = pd.DataFrame({
     "Finding": [
         "Low member activity is associated with higher churn",
@@ -407,5 +520,28 @@ recommendations = pd.DataFrame({
         "Consider targeted engagement for members who face greater location barriers"
     ]
 })
-# print(recommendations)
-recommendations.to_csv("outputs/churn_recommendations.csv", index=False)
+
+recommendations.to_csv(
+    "outputs/churn_recommendations.csv",
+    index=False
+)
+
+print("\nBusiness recommendations saved successfully!")
+
+# output files verification
+import os
+
+output_files = [
+    "outputs/model_comparison.csv",
+    "outputs/churn_insights.csv",
+    "outputs/churn_recommendations.csv"
+]
+
+print("\nVerifying output files:")
+
+for file in output_files:
+    if os.path.exists(file):
+        print(f"{file} - Found")
+    else:
+        print(f"{file} - Missing")
+

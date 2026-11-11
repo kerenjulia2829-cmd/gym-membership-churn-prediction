@@ -1,5 +1,5 @@
 Factor,Finding
-Lifetime,Churned members had much shorter recorded lifetimes
+Lifetime,Churned members had shorter recorded lifetimes
 Current Month Activity,Churned members showed lower current-month activity
 Age,Churned members were younger on average
 Contract Period,Shorter contracts had higher observed churn
@@ -8,5 +8,5 @@ Group Visits,Members without group visits had higher observed churn
 Friend Promotion,Members without friend promotion had higher observed churn
 Partner Status,Non-partner members had higher observed churn
 Near Location,Members not near the gym had higher observed churn
-Gender,Churn rates were almost identical
-Phone Availability,Churn rates were almost identical
+Gender,Churn rates were almost identical by gender
+Phone Availability,Churn rates were almost identical by phone availability
