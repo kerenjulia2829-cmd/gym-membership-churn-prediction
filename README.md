@@ -331,6 +331,8 @@ Download the Gym Customers Features and Churn dataset from Kaggle:
 
 [Gym Customers Features and Churn – Kaggle](https://www.kaggle.com/datasets/adrianvinueza/gym-customers-features-and-churn)
 
+**Note:** The dataset is not included in this GitHub repository. You must download it separately and place the CSV file in the specified location.
+
 Place the downloaded `gym_churn_us.csv` file inside the `data/` folder.
 
 The expected file location is:
